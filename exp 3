@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+
+char word[50], french[50];
+
+void *translate(void *arg) {
+    if(strcmp(word,"hello")==0)
+        strcpy(french,"bonjour");
+    else if(strcmp(word,"thanks")==0)
+        strcpy(french,"merci");
+    else if(strcmp(word,"goodbye")==0)
+        strcpy(french,"au revoir");
+    else
+        strcpy(french,"Translation not found");
+    return NULL;
+}
+
+int main() {
+    pthread_t t;
+
+    printf("Enter a word (hello/thanks/goodbye): ");
+    scanf("%49s",word);
+
+    pthread_create(&t,NULL,translate,NULL);
+    pthread_join(t,NULL);
+
+    printf("French translation: %s\n",french);
+    return 0;
+    
+    
