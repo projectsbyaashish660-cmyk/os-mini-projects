@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <pthread.h>
+
+#define WORDS 3
+#define LANGUAGES 3
+
+char *words[WORDS];
+char *languages[] = {"French", "Spanish", "German"};
+char *translations[LANGUAGES][WORDS] = {
+    {"Bonjour", "Merci", "Au revoir"},
+    {"Hola", "Gracias", "Adios"},
+    {"Hallo", "Danke", "Auf Wiedersehen"}
+};
+
+struct Data {
+    int lang, word;
+};
+
+void *translate(void *arg) {
+    struct Data *d = arg;
+    printf("%s translation of %s = %s\n",
+           languages[d->lang], words[d->word],
+           translations[d->lang][d->word]);
+    return NULL;
+}
+
+int main() {
+    pthread_t t[WORDS];
+    struct Data d[WORDS];
+    pid_t pid[LANGUAGES];
+
+    printf("Enter 3 words (hello thanks goodbye):\n");
+    for (int i = 0; i < WORDS; i++) {
+        words[i] = malloc(50);
+        scanf("%49s", words[i]);
+    }
+
+    for (int l = 0; l < LANGUAGES; l++) {
+        pid[l] = fork();
+
+        if (pid[l] == 0) {
+            printf("\n%s translations:\n", languages[l]);
+            for (int i = 0; i < WORDS; i++) {
+                d[i] = (struct Data){l, i};
+                pthread_create(&t[i], NULL, translate, &d[i]);
+            }
+            for (int i = 0; i < WORDS; i++)
+                pthread_join(t[i], NULL);
+            exit(0);
+        }
+    }
+
+    for (int i = 0; i < LANGUAGES; i++)
+        waitpid(pid[i], NULL, 0);
+
+    for (int i = 0; i < WORDS; i++)
+        free(words[i]);
+
+    printf("\nAll translations completed.\n");
+    return 0;
+}  
